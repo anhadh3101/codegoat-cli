@@ -1,0 +1,35 @@
+{
+  "name": "codegoat-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": {
+    "codegoat": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anhadh3101/codegoat-cli.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/anhadh3101/codegoat-cli/issues"
+  },
+  "homepage": "https://github.com/anhadh3101/codegoat-cli#readme",
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.23.5",
+    "typescript": "^7.0.2"
+  }
+}
