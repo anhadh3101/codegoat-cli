@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
+import { runInit } from './frontend/init';
 
 function isAuthCommand(command: Command): boolean {
   let current: Command | null = command;
@@ -27,6 +28,11 @@ program
 program.hook('preAction', async (_thisCommand, actionCommand) => {
   if (isAuthCommand(actionCommand)) return;
   await requireAuth();
+});
+
+// Running `codegoat` with no subcommand runs the init flow and chat.
+program.action(async () => {
+  await runInit();
 });
 
 program
