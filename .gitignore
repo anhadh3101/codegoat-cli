@@ -18,3 +18,4 @@ npm-debug.log*
 # IDE
 .idea/
 .vscode/
+.codegraph/
