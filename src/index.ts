@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
+import { isCodegoatChild, spawnAsCodegoat } from './lib/spawnAsCodegoat';
 import { runInit } from './frontend/init';
 
 function isAuthCommand(command: Command): boolean {
@@ -27,11 +28,18 @@ program
 // Check to see if it is an auth command, otherwise the tokens are always required.
 program.hook('preAction', async (_thisCommand, actionCommand) => {
   if (isAuthCommand(actionCommand)) return;
+  if (isCodegoatChild()) return;
   await requireAuth();
 });
 
-// Running `codegoat` with no subcommand runs the init flow and chat.
+// Running `codegoat` with no subcommand spawns a child process as the
+// codegoat system user, then runs the init flow there.
 program.action(async () => {
+  if (!isCodegoatChild()) {
+    const code = await spawnAsCodegoat();
+    process.exit(code);
+  }
+
   await runInit();
 });
 
