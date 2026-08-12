@@ -1,31 +1,28 @@
 import { spawn } from 'node:child_process';
-import * as readline from 'node:readline/promises';
-import { stdin, stdout } from 'node:process';
 
-const EXIT_COMMANDS = new Set(['/exit', '/quit', 'exit']);
-
-function runCommand(command: string): Promise<number> {
-  return new Promise((resolve) => {
-    const child = spawn(command, { shell: true, stdio: 'inherit' });
-    child.on('error', () => resolve(1));
-    child.on('exit', (code) => resolve(code ?? 1));
-  });
+function resolveShell(): string {
+  return process.env.SHELL || '/bin/zsh';
 }
 
-export async function startSession(): Promise<void> {
-  const rl = readline.createInterface({ input: stdin, output: stdout });
+export function startSession(): Promise<number> {
+  const shell = resolveShell();
 
-  console.log('Commands run as codegoat. Type /exit to quit.\n');
+  console.log('Starting shell as codegoat. Type exit to quit.\n');
 
-  try {
-    while (true) {
-      const line = (await rl.question('codegoat> ')).trim();
-      if (!line) continue;
-      if (EXIT_COMMANDS.has(line)) break;
+  return new Promise((resolve, reject) => {
+    const child = spawn(shell, ['-i'], {
+      stdio: 'inherit',
+      env: process.env,
+    });
 
-      await runCommand(line);
-    }
-  } finally {
-    rl.close();
-  }
+    child.on('error', reject);
+
+    child.on('exit', (code, signal) => {
+      if (signal) {
+        process.kill(process.pid, signal);
+        return;
+      }
+      resolve(code ?? 0);
+    });
+  });
 }

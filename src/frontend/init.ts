@@ -3,9 +3,8 @@ import { initializeCodeGraph } from '../codegraph/codegraphInit';
 import { startSession } from './session';
 import { clearScreen } from './clear';
 
-export async function runInit(): Promise<void> {
+export async function confirmWorkspace(): Promise<boolean> {
   clearScreen();
-
   p.intro('CodeGoat');
 
   const build = await p.confirm({
@@ -14,9 +13,13 @@ export async function runInit(): Promise<void> {
 
   if (p.isCancel(build) || !build) {
     p.cancel('Exiting.');
-    return;
+    return false;
   }
 
+  return true;
+}
+
+export async function runInit(): Promise<void> {
   const ok = await initializeCodeGraph();
   if (!ok) {
     p.cancel('Exiting.');
@@ -24,5 +27,8 @@ export async function runInit(): Promise<void> {
   }
 
   clearScreen();
-  await startSession();
+  const code = await startSession();
+  if (code !== 0) {
+    process.exitCode = code;
+  }
 }

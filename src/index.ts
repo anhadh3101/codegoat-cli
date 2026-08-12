@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import 'dotenv/config';
 import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
-import { isCodegoatChild, spawnAsCodegoat } from './lib/spawnAsCodegoat';
-import { runInit } from './frontend/init';
+import { confirmWorkspace, runInit } from './frontend/init';
+import { scopeAccess } from './sandboxing/scopeAccess';
+import { isCodegoatChild, spawnChildProcess } from './sandboxing/spawnChild';
 
 function isAuthCommand(command: Command): boolean {
   let current: Command | null = command;
@@ -36,7 +36,14 @@ program.hook('preAction', async (_thisCommand, actionCommand) => {
 // codegoat system user, then runs the init flow there.
 program.action(async () => {
   if (!isCodegoatChild()) {
-    const code = await spawnAsCodegoat();
+    const confirmed = await confirmWorkspace();
+    if (!confirmed) {
+      process.exit(0);
+    }
+
+    scopeAccess(process.cwd());
+
+    const code = await spawnChildProcess();
     process.exit(code);
   }
 

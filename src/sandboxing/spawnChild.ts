@@ -23,7 +23,8 @@ function resolveCliInvocation(): string[] {
   throw new Error('CodeGoat is not built. Run: npm run build');
 }
 
-export function spawnAsCodegoat(): Promise<number> {
+
+export function spawnChildProcess(): Promise<number> {
   const cliArgs = resolveCliInvocation();
 
   return new Promise((resolve, reject) => {

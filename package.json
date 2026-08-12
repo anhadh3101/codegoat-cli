@@ -6,6 +6,11 @@
   "bin": {
     "codegoat": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "create_user.sh",
+    ".env"
+  ],
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
