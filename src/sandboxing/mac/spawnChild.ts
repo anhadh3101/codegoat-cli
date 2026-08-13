@@ -1,12 +1,12 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
-export const CODEGOAT_CHILD_ENV = 'CODEGOAT_CHILD';
 const CODEGOAT_USER = 'codegoat';
 
 export function isCodegoatChild(): boolean {
-  return process.env[CODEGOAT_CHILD_ENV] === '1';
+  return os.userInfo().username === CODEGOAT_USER;
 }
 
 function resolveCliInvocation(): string[] {
@@ -33,7 +33,7 @@ export function spawnChildProcess(): Promise<number> {
       ['-u', CODEGOAT_USER, '-E', ...cliArgs],
       {
         stdio: 'inherit',
-        env: { ...process.env, [CODEGOAT_CHILD_ENV]: '1' },
+        env: { ...process.env },
       },
     );
 
