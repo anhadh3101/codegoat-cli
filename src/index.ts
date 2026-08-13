@@ -3,8 +3,8 @@ import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
 import { confirmWorkspace, runInit } from './frontend/init';
-import { scopeAccess } from './sandboxing/scopeAccess';
-import { isCodegoatChild, spawnChildProcess } from './sandboxing/spawnChild';
+import { scopeAccess } from './sandboxing/mac/scopeAccess';
+import { isCodegoatChild, spawnChildProcess } from './sandboxing/mac/spawnChild';
 
 function isAuthCommand(command: Command): boolean {
   let current: Command | null = command;
