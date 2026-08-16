@@ -3,7 +3,10 @@ import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
 import { confirmWorkspace, runInit } from './frontend/init';
-import { scopeAccess } from './sandboxing/mac/scopeAccess';
+import { CODEGOAT_GROUP, CODEGOAT_USER } from './sandboxing/mac/constants';
+import { createUserIfNotExists } from './sandboxing/mac/createUser';
+import { removeUserIfExists } from './sandboxing/mac/deleteUser';
+import { revokeTraverseGrants, scopeAccess } from './sandboxing/mac/scopeAccess';
 import { isCodegoatChild, spawnChildProcess } from './sandboxing/mac/spawnChild';
 
 function isAuthCommand(command: Command): boolean {
@@ -41,14 +44,56 @@ program.action(async () => {
       process.exit(0);
     }
 
-    scopeAccess(process.cwd());
+    createUserIfNotExists(CODEGOAT_USER);
 
-    const code = await spawnChildProcess();
-    process.exit(code);
+    let exitCode = 0;
+    let exitSignal: NodeJS.Signals | null = null;
+
+    const onSignal = (sig: NodeJS.Signals) => {
+      revokeTraverseGrants();
+      process.kill(process.pid, sig);
+    };
+
+    process.once('SIGINT', onSignal);
+    process.once('SIGTERM', onSignal);
+
+    try {
+      scopeAccess(process.cwd());
+      const result = await spawnChildProcess();
+      exitCode = result.code ?? 1;
+      exitSignal = result.signal;
+    } finally {
+      process.removeListener('SIGINT', onSignal);
+      process.removeListener('SIGTERM', onSignal);
+      revokeTraverseGrants();
+    }
+
+    if (exitSignal) {
+      process.kill(process.pid, exitSignal);
+    } else {
+      process.exit(exitCode);
+    }
   }
 
   await runInit();
 });
+
+const resetCommand = program.command('reset').description('Reset CodeGoat sandbox state');
+
+resetCommand
+  .command('user')
+  .description('Remove the codegoat sandbox user and group')
+  .action(() => {
+    const result = removeUserIfExists(CODEGOAT_USER, CODEGOAT_GROUP);
+
+    if (!result.userRemoved && !result.groupRemoved) {
+      console.log(`Nothing to remove: '${CODEGOAT_USER}' user and '${CODEGOAT_GROUP}' group do not exist.`);
+      return;
+    }
+
+    if (result.userRemoved) console.log(`Removed user '${CODEGOAT_USER}'.`);
+    if (result.groupRemoved) console.log(`Removed group '${CODEGOAT_GROUP}'.`);
+  });
 
 program
   .command('hello')

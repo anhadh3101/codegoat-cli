@@ -1,8 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { CODEGOAT_GROUP } from './constants';
 
-const GROUP = 'codegoatshared';
+const GROUP = CODEGOAT_GROUP;
+const grantedTraverseDirs: string[] = [];
 
 function hasSearchAce(dir: string): boolean {
   const out = execFileSync('ls', ['-lde', dir], { encoding: 'utf8' });
@@ -17,6 +19,7 @@ function isWorldTraversable(dir: string): boolean {
 function grantTraverse(dir: string): void {
   if (hasSearchAce(dir)) return;
   execFileSync('chmod', ['+a', `group:${GROUP} allow search`, dir]);
+  grantedTraverseDirs.push(dir);
 }
 
 function scopeTargetDirectory(targetDir: string): void {
@@ -40,4 +43,20 @@ export function scopeAccess(targetDir: string): void {
   const resolved = path.resolve(targetDir);
   scopeTargetDirectory(resolved);
   grantTraverseOnAncestors(resolved);
+}
+
+export function revokeTraverseGrants(): void {
+  if (grantedTraverseDirs.length === 0) return;
+
+  for (const dir of [...grantedTraverseDirs].reverse()) {
+    try {
+      if (hasSearchAce(dir)) {
+        execFileSync('chmod', ['-a', `group:${GROUP} allow search`, dir]);
+      }
+    } catch {
+      // Best-effort cleanup; continue revoking remaining dirs.
+    }
+  }
+
+  grantedTraverseDirs.length = 0;
 }

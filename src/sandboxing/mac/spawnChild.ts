@@ -2,8 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-
-const CODEGOAT_USER = 'codegoat';
+import { CODEGOAT_USER } from './constants';
 
 export function isCodegoatChild(): boolean {
   return os.userInfo().username === CODEGOAT_USER;
@@ -24,7 +23,12 @@ function resolveCliInvocation(): string[] {
 }
 
 
-export function spawnChildProcess(): Promise<number> {
+export interface SpawnChildResult {
+  code: number | null;
+  signal: NodeJS.Signals | null;
+}
+
+export function spawnChildProcess(): Promise<SpawnChildResult> {
   const cliArgs = resolveCliInvocation();
 
   return new Promise((resolve, reject) => {
@@ -46,11 +50,10 @@ export function spawnChildProcess(): Promise<number> {
     });
 
     child.on('exit', (code, signal) => {
-      if (signal) {
-        process.kill(process.pid, signal);
-        return;
-      }
-      resolve(code ?? 1);
+      resolve({
+        code: code ?? null,
+        signal: signal ?? null,
+      });
     });
   });
 }
