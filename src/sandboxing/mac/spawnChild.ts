@@ -9,14 +9,14 @@ export function isCodegoatChild(): boolean {
 }
 
 function resolveCliInvocation(): string[] {
-  const distEntry = path.join(process.cwd(), 'dist', 'index.js');
-  if (fs.existsSync(distEntry)) {
-    return [process.execPath, distEntry];
+  const runningEntry = process.argv[1];
+  if (runningEntry && fs.existsSync(runningEntry)) {
+    return [process.execPath, runningEntry];
   }
 
-  const jsEntry = path.join(__dirname, '..', 'index.js');
-  if (fs.existsSync(jsEntry)) {
-    return [process.execPath, jsEntry];
+  const distEntry = path.join(__dirname, '..', '..', 'index.js');
+  if (fs.existsSync(distEntry)) {
+    return [process.execPath, distEntry];
   }
 
   throw new Error('CodeGoat is not built. Run: npm run build');

@@ -23,6 +23,7 @@ const program = new Command();
 // Integrate the auth commands to CodeGoat
 program.addCommand(authCommand);
 
+// Program details
 program
   .name('codegoat')
   .description('CodeGoat CLI')
@@ -30,7 +31,9 @@ program
 
 // Check to see if it is an auth command, otherwise the tokens are always required.
 program.hook('preAction', async (_thisCommand, actionCommand) => {
+  // Running auth commands does not require user to be authenticated.
   if (isAuthCommand(actionCommand)) return;
+  // If the process's user is "codegoat", then auth is not required.
   if (isCodegoatChild()) return;
   await requireAuth();
 });
