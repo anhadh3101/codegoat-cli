@@ -5,8 +5,6 @@ node_modules/
 dist/
 
 # Environment variables
-.env
-.env.*
 
 # Logs
 *.log
@@ -19,3 +17,12 @@ npm-debug.log*
 .idea/
 .vscode/
 .codegraph/
+
+.projects/cache
+.projects/vault
+.projects/state.test.json
+.projects/state.local.json
+.projects/state.local.test.json
+.env
+.env.*
+!.env.example
