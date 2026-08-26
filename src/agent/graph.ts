@@ -2,10 +2,12 @@ export const START = '__start__';
 export const END = '__end__';
 
 export type NodeFn<S> = (state: S) => Promise<Partial<S>> | Partial<S>;
+export type RouterFn<S> = (state: S) => string;
 
 export class StateGraph<S> {
   private nodes = new Map<string, NodeFn<S>>();
   private edges = new Map<string, string>();
+  private conditionalEdges = new Map<string, RouterFn<S>>();
 
   addNode(name: string, fn: NodeFn<S>): this {
     this.nodes.set(name, fn);
@@ -17,9 +19,15 @@ export class StateGraph<S> {
     return this;
   }
 
+  addConditionalEdge(from: string, router: RouterFn<S>): this {
+    this.conditionalEdges.set(from, router);
+    return this;
+  }
+
   compile() {
     const nodes = this.nodes;
     const edges = this.edges;
+    const conditionalEdges = this.conditionalEdges;
 
     return {
       async invoke(initialState: S): Promise<S> {
@@ -34,7 +42,9 @@ export class StateGraph<S> {
 
           const update = await fn(state);
           state = { ...state, ...update };
-          current = edges.get(current);
+
+          const router = conditionalEdges.get(current);
+          current = router ? router(state) : edges.get(current);
         }
 
         return state;

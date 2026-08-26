@@ -1,35 +1,43 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { END, START, StateGraph } from './graph';
-
-export type ChatMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
+import { hasPendingClientToolCall, toolNode } from './toolNode';
+import { allTools } from './tools';
 
 export type AgentState = {
-  messages: ChatMessage[];
+  messages: Anthropic.MessageParam[];
 };
 
-const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-});
+const client = new Anthropic();
 
 async function modelNode(state: AgentState): Promise<Partial<AgentState>> {
-  const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'openai/gpt-4o-mini',
+  const response = await client.messages.create({
+    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5',
+    max_tokens: 4096,
     messages: state.messages,
+    tools: allTools,
   });
 
-  const reply = completion.choices[0]?.message?.content ?? '';
+  return {
+    // response.content (ContentBlock[]) carries extra response-only fields
+    // beyond ContentBlockParam[], but is safe to feed straight back in as
+    // the next turn's input per Anthropic's conversation-loop convention.
+    messages: [
+      ...state.messages,
+      { role: 'assistant', content: response.content as unknown as Anthropic.MessageParam['content'] },
+    ],
+  };
+}
 
-  return { messages: [...state.messages, { role: 'assistant', content: reply }] };
+function routeAfterModel(state: AgentState): string {
+  return hasPendingClientToolCall(state) ? 'tools' : END;
 }
 
 const graph = new StateGraph<AgentState>()
   .addNode('model', modelNode)
+  .addNode('tools', toolNode)
   .addEdge(START, 'model')
-  .addEdge('model', END)
+  .addConditionalEdge('model', routeAfterModel)
+  .addEdge('tools', 'model')
   .compile();
 
 export function runAgent(state: AgentState): Promise<AgentState> {

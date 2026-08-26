@@ -1,5 +1,15 @@
 import * as repl from 'node:repl';
+import type Anthropic from '@anthropic-ai/sdk';
 import { AgentState, runAgent } from '../agent/agent';
+
+function extractText(content: Anthropic.MessageParam['content']): string {
+  if (typeof content === 'string') return content;
+
+  return content
+    .filter((block): block is Anthropic.TextBlockParam => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n');
+}
 
 export function startSession(): Promise<number> {
   console.log('Starting CodeGoat agent REPL. Type .exit to quit.\n');
@@ -22,7 +32,8 @@ export function startSession(): Promise<number> {
         try {
           const result = await runAgent(state);
           state.messages = result.messages;
-          const reply = state.messages[state.messages.length - 1]?.content ?? '';
+          const last = state.messages[state.messages.length - 1];
+          const reply = last ? extractText(last.content) : '';
           callback(null, reply);
         } catch (err) {
           callback(err as Error, undefined);
