@@ -31,6 +31,7 @@
   "homepage": "https://github.com/anhadh3101/codegoat-cli#readme",
   "dependencies": {
     "@clack/prompts": "^1.7.0",
+    "@codegoat-cli/agentrail": "file:../agentrail",
     "commander": "^15.0.0",
     "dotenv": "^17.4.2",
     "keytar": "^7.9.0",

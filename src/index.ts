@@ -3,11 +3,15 @@ import { Command } from 'commander';
 import { authCommand } from './commands/auth';
 import { requireAuth } from './lib/requireAuth';
 import { confirmWorkspace, runInit } from './frontend/init';
-import { CODEGOAT_GROUP, CODEGOAT_USER } from './sandboxing/mac/constants';
-import { createUserIfNotExists } from './sandboxing/mac/createUser';
-import { removeUserIfExists } from './sandboxing/mac/deleteUser';
-import { revokeTraverseGrants, scopeAccess } from './sandboxing/mac/scopeAccess';
-import { isCodegoatChild, spawnChildProcess } from './sandboxing/mac/spawnChild';
+import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild';
+import {
+  resolveUsername,
+  resolveGroup,
+  createUserIfNotExists,
+  removeUserIfExists,
+  revokeTraverseGrants,
+  scopeAccess,
+} from '@codegoat-cli/agentrail';
 
 function isAuthCommand(command: Command): boolean {
   let current: Command | null = command;
@@ -47,7 +51,7 @@ program.action(async () => {
       process.exit(0);
     }
 
-    createUserIfNotExists(CODEGOAT_USER);
+    createUserIfNotExists();
 
     let exitCode = 0;
     let exitSignal: NodeJS.Signals | null = null;
@@ -87,15 +91,17 @@ resetCommand
   .command('user')
   .description('Remove the codegoat sandbox user and group')
   .action(() => {
-    const result = removeUserIfExists(CODEGOAT_USER, CODEGOAT_GROUP);
+    const username = resolveUsername();
+    const group = resolveGroup();
+    const result = removeUserIfExists(username, group);
 
     if (!result.userRemoved && !result.groupRemoved) {
-      console.log(`Nothing to remove: '${CODEGOAT_USER}' user and '${CODEGOAT_GROUP}' group do not exist.`);
+      console.log(`Nothing to remove: '${username}' user and '${group}' group do not exist.`);
       return;
     }
 
-    if (result.userRemoved) console.log(`Removed user '${CODEGOAT_USER}'.`);
-    if (result.groupRemoved) console.log(`Removed group '${CODEGOAT_GROUP}'.`);
+    if (result.userRemoved) console.log(`Removed user '${username}'.`);
+    if (result.groupRemoved) console.log(`Removed group '${group}'.`);
   });
 
 program
