@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { authCommand } from './commands/auth';
+import { uninstallCommand } from './commands/uninstall';
 import { requireAuth } from './lib/requireAuth';
 import { confirmWorkspace, runInit } from './frontend/init';
 import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild';
@@ -9,7 +10,6 @@ import {
   resolveGroup,
   createUserIfNotExists,
   removeUserIfExists,
-  revokeTraverseGrants,
   scopeAccess,
 } from '@codegoat-cli/agentrail';
 
@@ -26,6 +26,7 @@ const program = new Command();
 
 // Integrate the auth commands to CodeGoat
 program.addCommand(authCommand);
+program.addCommand(uninstallCommand);
 
 // Program details
 program
@@ -56,8 +57,9 @@ program.action(async () => {
     let exitCode = 0;
     let exitSignal: NodeJS.Signals | null = null;
 
+    // Traverse grants are intentionally left in place after this run — they're only
+    // torn down by `codegoat uninstall`, not on session exit. See uninstall.ts.
     const onSignal = (sig: NodeJS.Signals) => {
-      revokeTraverseGrants();
       process.kill(process.pid, sig);
     };
 
@@ -72,7 +74,6 @@ program.action(async () => {
     } finally {
       process.removeListener('SIGINT', onSignal);
       process.removeListener('SIGTERM', onSignal);
-      revokeTraverseGrants();
     }
 
     if (exitSignal) {
