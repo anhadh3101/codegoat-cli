@@ -1,13 +1,20 @@
+import { styleText } from 'node:util';
 import * as p from '@clack/prompts';
-import { startSession } from './session';
-import { clearScreen } from './clear';
+import { startSession } from './session.js';
+import { clearScreen } from './clear.js';
 
 export async function confirmWorkspace(): Promise<boolean> {
   clearScreen();
-  p.intro('CodeGoat');
+  p.intro(styleText('cyan', 'CodeGoat'));
 
   const build = await p.confirm({
-    message: 'Build in this workspace using CodeGoat',
+    message: styleText(
+      ['yellow', 'bold'],
+      'Do you trust this workspace?',
+    ),
+    active: 'Yes, I trust it',
+    inactive: 'No',
+    initialValue: false,
   });
 
   if (p.isCancel(build) || !build) {

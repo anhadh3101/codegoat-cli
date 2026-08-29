@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { END, START, StateGraph } from './graph';
-import { hasPendingClientToolCall, toolNode } from './toolNode';
-import { allTools } from './tools';
+import { END, START, StateGraph } from './graph.js';
+import { hasPendingClientToolCall, toolNode } from './toolNode.js';
+import { allTools } from './tools/index.js';
 
 export type AgentState = {
   messages: Anthropic.MessageParam[];

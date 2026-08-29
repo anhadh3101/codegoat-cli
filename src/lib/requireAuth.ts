@@ -1,4 +1,4 @@
-import { getValidToken } from './auth';
+import { getValidToken } from './auth.js';
 
 // Checks if valid auth token is present and handles the flow if the token is null
 export async function requireAuth(): Promise<string> {

@@ -43,7 +43,7 @@ export function spawnChildProcess(options: SpawnChildOptions = {}): Promise<Spaw
   return new Promise((resolve, reject) => {
     const child = spawn(
       'sudo',
-      ['-u', targetUser, '-E', ...cliArgs],
+      ['-p', '\n[sudo] password for %p: ', '-u', targetUser, '-E', ...cliArgs],
       {
         stdio: 'inherit',
         env: { ...process.env },

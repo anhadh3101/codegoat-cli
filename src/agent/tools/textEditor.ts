@@ -2,7 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
-import type { ClientTool, ToolResult } from '../toolNode';
+import type { ClientTool, ToolResult } from '../toolNode.js';
 
 const viewSchema = z.object({
   command: z.literal('view'),

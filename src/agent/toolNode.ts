@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { clientToolsByName } from './tools';
+import { clientToolsByName } from './tools/index.js';
 
 export interface ToolResult {
   content: string;

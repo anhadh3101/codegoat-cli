@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { authCommand } from './commands/auth';
-import { uninstallCommand } from './commands/uninstall';
-import { requireAuth } from './lib/requireAuth';
-import { confirmWorkspace, runInit } from './frontend/init';
-import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild';
+import { authCommand } from './commands/auth.js';
+import { uninstallCommand } from './commands/uninstall.js';
+import { requireAuth } from './lib/requireAuth.js';
+import { confirmWorkspace, runInit } from './frontend/init.js';
+import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild.js';
 import {
   resolveUsername,
   resolveGroup,
   createUserIfNotExists,
   removeUserIfExists,
+  removeGroupIfExists,
   scopeAccess,
 } from '@codegoat-cli/agentrail';
 
@@ -94,15 +95,16 @@ resetCommand
   .action(() => {
     const username = resolveUsername();
     const group = resolveGroup();
-    const result = removeUserIfExists(username, group);
+    const { userRemoved } = removeUserIfExists(username);
+    const { groupRemoved } = removeGroupIfExists(group);
 
-    if (!result.userRemoved && !result.groupRemoved) {
+    if (!userRemoved && !groupRemoved) {
       console.log(`Nothing to remove: '${username}' user and '${group}' group do not exist.`);
       return;
     }
 
-    if (result.userRemoved) console.log(`Removed user '${username}'.`);
-    if (result.groupRemoved) console.log(`Removed group '${group}'.`);
+    if (userRemoved) console.log(`Removed user '${username}'.`);
+    if (groupRemoved) console.log(`Removed group '${group}'.`);
   });
 
 program

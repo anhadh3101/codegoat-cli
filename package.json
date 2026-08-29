@@ -24,7 +24,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/anhadh3101/codegoat-cli/issues"
   },
@@ -36,11 +36,16 @@
     "commander": "^15.0.0",
     "dotenv": "^17.4.2",
     "execa": "^5.1.1",
+    "ink": "^7.1.1",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
     "keytar": "^7.9.0",
+    "react": "^19.2.8",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
     "tsx": "^4.23.5",
     "typescript": "^7.0.2"
   }

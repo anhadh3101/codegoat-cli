@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
-import { auth0Config } from './config';
-import { getCredentials, saveCredentials } from './auth';
+import { auth0Config } from './config.js';
+import { getCredentials, saveCredentials } from './auth.js';
 
 const SCOPE = 'openid profile email offline_access';
 

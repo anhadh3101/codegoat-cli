@@ -1,5 +1,5 @@
 import keytar from 'keytar';
-import { refreshAccessToken } from './auth0';
+import { refreshAccessToken } from './auth0.js';
 
 const SERVICE = 'codegoat-cli';
 const ACCOUNT = 'default';

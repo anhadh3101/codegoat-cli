@@ -1,0 +1,83 @@
+import { useCallback, useRef, useState } from 'react';
+import { Box, Static, useApp, useInput } from 'ink';
+import { type AgentState, runAgent } from '../../agent/agent.js';
+import { extractText } from '../../agent/messages.js';
+import type { TranscriptItem } from '../transcript.js';
+import { Banner } from './Banner.js';
+import { Message } from './Message.js';
+import { ThinkingLine } from './ThinkingLine.js';
+import { Prompt } from './Prompt.js';
+
+let counter = 0;
+const nextId = () => `${Date.now()}-${counter++}`;
+
+export function App({ cwd }: { cwd: string }) {
+  const { exit } = useApp();
+
+  // Raw Anthropic history — the agent's source of truth. Mutated across turns.
+  const stateRef = useRef<AgentState>({ messages: [] });
+
+  // Display transcript — drives <Static>. Append-only.
+  const [items, setItems] = useState<TranscriptItem[]>([
+    { kind: 'banner', id: 'banner', cwd },
+  ]);
+  const [busy, setBusy] = useState(false);
+
+  useInput((input, key) => {
+    if (key.ctrl && input === 'd') exit();
+  });
+
+  const submit = useCallback(
+    async (raw: string) => {
+      const text = raw.trim();
+      if (!text || busy) return;
+
+      if (text === '/exit' || text === '/quit') {
+        exit();
+        return;
+      }
+
+      setItems((prev) => [...prev, { kind: 'user', id: nextId(), text }]);
+      stateRef.current.messages.push({ role: 'user', content: text });
+      setBusy(true);
+
+      try {
+        const result = await runAgent(stateRef.current);
+        stateRef.current.messages = result.messages;
+        const last = result.messages[result.messages.length - 1];
+        const reply = last ? extractText(last.content) : '';
+        setItems((prev) => [
+          ...prev,
+          { kind: 'assistant', id: nextId(), text: reply },
+        ]);
+      } catch (err) {
+        setItems((prev) => [
+          ...prev,
+          { kind: 'error', id: nextId(), text: (err as Error).message },
+        ]);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, exit],
+  );
+
+  return (
+    <>
+      <Static items={items}>
+        {(item) =>
+          item.kind === 'banner' ? (
+            <Banner key={item.id} cwd={item.cwd} />
+          ) : (
+            <Message key={item.id} item={item} />
+          )
+        }
+      </Static>
+
+      <Box flexDirection="column">
+        {busy && <ThinkingLine />}
+        <Prompt onSubmit={submit} disabled={busy} />
+      </Box>
+    </>
+  );
+}

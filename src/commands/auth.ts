@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { clearCredentials } from '../lib/auth';
-import { getUserInfo, loginWithDeviceFlow } from '../lib/auth0';
-import { requireAuth } from '../lib/requireAuth';
+import { clearCredentials } from '../lib/auth.js';
+import { getUserInfo, loginWithDeviceFlow } from '../lib/auth0.js';
+import { requireAuth } from '../lib/requireAuth.js';
 
 export const authCommand = new Command('auth')
   .description('Manage authentication');

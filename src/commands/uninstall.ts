@@ -8,6 +8,7 @@ import {
   resolveGroup,
   resolveAppName,
   removeUserIfExists,
+  removeGroupIfExists,
   revokeTraverseGrants,
 } from '@codegoat-cli/agentrail';
 
@@ -33,10 +34,11 @@ export const uninstallCommand = new Command('uninstall')
       // 2. Remove the sandbox user and group.
       const username = resolveUsername();
       const group = resolveGroup();
-      const result = removeUserIfExists(username, group);
-      if (result.userRemoved) console.log(`Removed user '${username}'.`);
-      if (result.groupRemoved) console.log(`Removed group '${group}'.`);
-      if (!result.userRemoved && !result.groupRemoved) {
+      const { userRemoved } = removeUserIfExists(username);
+      const { groupRemoved } = removeGroupIfExists(group);
+      if (userRemoved) console.log(`Removed user '${username}'.`);
+      if (groupRemoved) console.log(`Removed group '${group}'.`);
+      if (!userRemoved && !groupRemoved) {
         console.log(`'${username}' user and '${group}' group did not exist.`);
       }
 

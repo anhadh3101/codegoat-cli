@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 // Resolve configuration from CodeGoat's installation directory instead of
 // process.cwd(), so the CLI behaves consistently from any workspace.
 dotenv.config({
-  path: path.resolve(__dirname, '../../.env'),
+  path: path.resolve(import.meta.dirname, '../../.env'),
 });
 
 function requireEnv(name: string): string {

@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import execa from 'execa';
 import { z } from 'zod';
-import type { ClientTool, ToolResult } from '../toolNode';
+import type { ClientTool, ToolResult } from '../toolNode.js';
 
 const bashInputSchema = z.object({
   command: z.string().optional(),

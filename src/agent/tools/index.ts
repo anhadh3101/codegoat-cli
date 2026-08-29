@@ -1,9 +1,9 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { ClientTool } from '../toolNode';
-import { bashClientTool } from './bash';
-import { textEditorClientTool } from './textEditor';
-import { webFetchTool } from './webFetch';
-import { webSearchTool } from './webSearch';
+import type { ClientTool } from '../toolNode.js';
+import { bashClientTool } from './bash.js';
+import { textEditorClientTool } from './textEditor.js';
+import { webFetchTool } from './webFetch.js';
+import { webSearchTool } from './webSearch.js';
 
 const clientTools: ClientTool[] = [bashClientTool, textEditorClientTool];
 
