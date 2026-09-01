@@ -1,17 +1,19 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { END, START, StateGraph } from './graph.js';
 import { hasPendingClientToolCall, toolNode } from './toolNode.js';
+import { DEFAULT_MODEL } from './models.js';
 import { allTools } from './tools/index.js';
 
 export type AgentState = {
   messages: Anthropic.MessageParam[];
+  model?: string;
 };
 
 const client = new Anthropic();
 
 async function modelNode(state: AgentState): Promise<Partial<AgentState>> {
   const response = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5',
+    model: state.model ?? DEFAULT_MODEL,
     max_tokens: 4096,
     messages: state.messages,
     tools: allTools,

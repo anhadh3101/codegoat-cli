@@ -21,6 +21,16 @@ export function Message({ item }: { item: MessageItem }) {
     );
   }
 
+  if (item.kind === 'info') {
+    return (
+      <Box marginBottom={1}>
+        <Text color="cyan" dimColor>
+          {item.text}
+        </Text>
+      </Box>
+    );
+  }
+
   // assistant — plain text for now.
   // Later: swap <Text> for a <Markdown> component, add tool-status rows above.
   return (
