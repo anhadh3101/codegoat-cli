@@ -1,15 +1,26 @@
 import { useState } from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 
 export function Prompt({
   onSubmit,
+  onOpenConversations,
   disabled,
 }: {
   onSubmit: (value: string) => void;
+  onOpenConversations: () => void;
   disabled: boolean;
 }) {
   const [value, setValue] = useState('');
+
+  useInput(
+    (_input, key) => {
+      if (value === '' && key.leftArrow) {
+        onOpenConversations();
+      }
+    },
+    { isActive: !disabled },
+  );
 
   const submit = (raw: string) => {
     setValue('');

@@ -26,6 +26,7 @@ interface TokenErrorResponse {
 }
 
 export interface UserInfo {
+  sub: string;
   email?: string;
   name?: string;
 }

@@ -4,6 +4,9 @@ import { refreshAccessToken } from './auth0.js';
 const SERVICE = 'codegoat-cli';
 const ACCOUNT = 'default';
 
+/** Passed from the parent process to the sandbox child (keychain is per OS user). */
+export const CODEGOAT_USER_SUB_ENV = 'CODEGOAT_USER_SUB';
+
 export interface StoredCredentials {
   accessToken: string;
   refreshToken: string;

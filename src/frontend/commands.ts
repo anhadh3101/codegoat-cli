@@ -1,3 +1,5 @@
+export type AppView = 'prompt' | 'model-select' | 'conversation-select';
+
 export type CommandResult =
   | { kind: 'exit' }
   | { kind: 'view'; view: 'model-select' }

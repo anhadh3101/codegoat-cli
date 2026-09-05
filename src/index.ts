@@ -2,9 +2,12 @@
 import { Command } from 'commander';
 import { authCommand } from './commands/auth.js';
 import { uninstallCommand } from './commands/uninstall.js';
+import { CODEGOAT_USER_SUB_ENV, getValidToken } from './lib/auth.js';
+import { getUserInfo } from './lib/auth0.js';
 import { requireAuth } from './lib/requireAuth.js';
 import { confirmWorkspace, runInit } from './frontend/init.js';
 import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild.js';
+import { ensureWorkspaceDir } from './lib/workspace.js';
 import {
   resolveUsername,
   resolveGroup,
@@ -53,6 +56,8 @@ program.action(async () => {
       process.exit(0);
     }
 
+    ensureWorkspaceDir();
+
     createUserIfNotExists();
 
     let exitCode = 0;
@@ -69,6 +74,13 @@ program.action(async () => {
 
     try {
       scopeAccess(process.cwd());
+
+      const token = await getValidToken();
+      if (token) {
+        const user = await getUserInfo(token);
+        process.env[CODEGOAT_USER_SUB_ENV] = user.sub;
+      }
+
       const result = await spawnChildProcess();
       exitCode = result.code ?? 1;
       exitSignal = result.signal;

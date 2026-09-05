@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { END, START, StateGraph } from './graph.js';
 import { hasPendingClientToolCall, toolNode } from './toolNode.js';
 import { DEFAULT_MODEL } from './models.js';
+import { buildSystemPrompt } from './prompts/system.js';
 import { allTools } from './tools/index.js';
 
 export type AgentState = {
@@ -15,6 +16,7 @@ async function modelNode(state: AgentState): Promise<Partial<AgentState>> {
   const response = await client.messages.create({
     model: state.model ?? DEFAULT_MODEL,
     max_tokens: 4096,
+    system: buildSystemPrompt(process.cwd()),
     messages: state.messages,
     tools: allTools,
   });

@@ -1,11 +1,19 @@
 {
   "version": 1,
   "providers": {
+    "neon": {
+      "name": "Neon"
+    },
     "openrouter": {
       "name": "OpenRouter"
     }
   },
   "resources": {
+    "neon-plan": {
+      "name": "neon-plan",
+      "providerName": "Neon",
+      "serviceId": "free"
+    },
     "openrouter-api": {
       "name": "openrouter-api",
       "providerName": "OpenRouter",
@@ -15,6 +23,11 @@
       "name": "openrouter-plan",
       "providerName": "OpenRouter",
       "serviceId": "pay_as_you_go"
+    },
+    "primary-db": {
+      "name": "primary-db",
+      "providerName": "Neon",
+      "serviceId": "postgres"
     }
   }
 }
