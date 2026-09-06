@@ -3,14 +3,14 @@ import { Box, Static, useApp, useInput } from 'ink';
 import { type AgentState, runAgent } from '../../agent/agent.js';
 import { extractText } from '../../agent/messages.js';
 import { DEFAULT_MODEL, modelLabel } from '../../agent/models.js';
-import { CODEGOAT_USER_SUB_ENV, getValidToken } from '../../lib/auth.js';
-import { getUserInfo } from '../../lib/auth0.js';
+import { CODEGOAT_USER_SUB_ENV, getValidToken } from '../../authentication/auth.js';
+import { getUserInfo } from '../../authentication/auth0.js';
 import {
   createConversation,
   loadConversation,
   saveTurn,
   type DisplayRow,
-} from '../../lib/conversations.js';
+} from '../../persistence/conversations.js';
 import { clearScreen } from '../clear.js';
 import { type AppView, runCommand } from '../commands.js';
 import type { TranscriptItem } from '../transcript.js';

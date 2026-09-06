@@ -4,7 +4,7 @@ import SelectInput from 'ink-select-input';
 import {
   listConversations,
   type ConversationSummary,
-} from '../../lib/conversations.js';
+} from '../../persistence/conversations.js';
 
 export const NEW_CONVERSATION = '__new__';
 

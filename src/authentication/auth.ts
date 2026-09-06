@@ -21,7 +21,7 @@ export async function saveCredentials(credentials: StoredCredentials): Promise<v
 // Fetch the credentials from the keychain.
 export async function getCredentials(): Promise<StoredCredentials | null> {
   const raw = await keytar.getPassword(SERVICE, ACCOUNT);
-  
+
   // If no credentials exist, return null.
   if (!raw) return null;
   return JSON.parse(raw) as StoredCredentials;

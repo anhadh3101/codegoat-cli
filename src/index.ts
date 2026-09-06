@@ -2,9 +2,9 @@
 import { Command } from 'commander';
 import { authCommand } from './commands/auth.js';
 import { uninstallCommand } from './commands/uninstall.js';
-import { CODEGOAT_USER_SUB_ENV, getValidToken } from './lib/auth.js';
-import { getUserInfo } from './lib/auth0.js';
-import { requireAuth } from './lib/requireAuth.js';
+import { CODEGOAT_USER_SUB_ENV, getValidToken } from './authentication/auth.js';
+import { getUserInfo } from './authentication/auth0.js';
+import { requireAuth } from './authentication/requireAuth.js';
 import { confirmWorkspace, runInit } from './frontend/init.js';
 import { isCodegoatChild, spawnChildProcess } from './lib/spawnChild.js';
 import { ensureWorkspaceDir } from './lib/workspace.js';

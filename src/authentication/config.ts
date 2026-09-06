@@ -20,7 +20,3 @@ export const auth0Config = {
   clientId: requireEnv('AUTH0_CLIENT_ID'),
   audience: process.env.AUTH0_AUDIENCE,
 };
-
-export const dbConfig = {
-  connectionString: requireEnv('PRIMARY_DB_CONNECTION_STRING'),
-};
