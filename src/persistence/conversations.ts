@@ -38,7 +38,7 @@ export async function listConversations(
     updated_at: Date;
   }>(
     `SELECT id, title, model, updated_at
-     FROM conversations
+     FROM session
      WHERE user_id = $1
      ORDER BY updated_at DESC`,
     [userId],
@@ -66,7 +66,7 @@ export async function loadConversation(
     agent_messages: Anthropic.MessageParam[];
   }>(
     `SELECT id, title, cwd, model, agent_messages
-     FROM conversations
+     FROM session
      WHERE id = $1 AND user_id = $2`,
     [id, userId],
   );
@@ -81,7 +81,7 @@ export async function loadConversation(
   }>(
     `SELECT role, content, position
      FROM messages
-     WHERE conversation_id = $1
+     WHERE session_id = $1
      ORDER BY position`,
     [id],
   );
@@ -103,7 +103,7 @@ export async function createConversation(input: {
   model: string;
 }): Promise<string> {
   const { rows } = await getPool().query<{ id: string }>(
-    `INSERT INTO conversations (user_id, title, cwd, model)
+    `INSERT INTO session (user_id, title, cwd, model)
      VALUES ($1, $2, $3, $4)
      RETURNING id`,
     [input.userId, input.title, input.cwd, input.model],
@@ -126,7 +126,7 @@ export async function saveTurn(input: {
     await client.query('BEGIN');
 
     await client.query(
-      `UPDATE conversations
+      `UPDATE session
        SET model = $1, agent_messages = $2::jsonb, updated_at = now()
        WHERE id = $3 AND user_id = $4`,
       [
@@ -140,7 +140,7 @@ export async function saveTurn(input: {
     const { rows: posRows } = await client.query<{ next: number }>(
       `SELECT COALESCE(MAX(position), -1) + 1 AS next
        FROM messages
-       WHERE conversation_id = $1`,
+       WHERE session_id = $1`,
       [input.conversationId],
     );
 
@@ -148,7 +148,7 @@ export async function saveTurn(input: {
 
     for (const row of input.displayRows) {
       await client.query(
-        `INSERT INTO messages (conversation_id, position, role, content)
+        `INSERT INTO messages (session_id, position, role, content)
          VALUES ($1, $2, $3, $4)`,
         [input.conversationId, position, row.role, row.content],
       );

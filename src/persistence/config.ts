@@ -12,6 +12,7 @@ function requireEnv(name: string): string {
   return value;
 }
 
+// Export the DB configs for the persistence layer
 export const dbConfig = {
   connectionString: requireEnv('PRIMARY_DB_CONNECTION_STRING'),
 };

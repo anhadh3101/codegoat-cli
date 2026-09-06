@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Static, useApp, useInput } from 'ink';
+import { useApp, useInput, useStdout } from 'ink';
 import { type AgentState, runAgent } from '../../agent/agent.js';
 import { extractText } from '../../agent/messages.js';
 import { DEFAULT_MODEL, modelLabel } from '../../agent/models.js';
@@ -13,16 +13,15 @@ import {
 } from '../../persistence/conversations.js';
 import { clearScreen } from '../clear.js';
 import { type AppView, runCommand } from '../commands.js';
-import type { TranscriptItem } from '../transcript.js';
-import { Banner } from './Banner.js';
+import type { MessageItem } from '../transcript.js';
+import { ChatScreen } from './ChatScreen.js';
+import { NEW_CONVERSATION } from './ConversationSelect.js';
+import { SessionsScreen } from './SessionsScreen.js';
 import {
-  ConversationSelect,
-  NEW_CONVERSATION,
-} from './ConversationSelect.js';
-import { Message } from './Message.js';
-import { ThinkingLine } from './ThinkingLine.js';
-import { ModelSelect } from './ModelSelect.js';
-import { Prompt } from './Prompt.js';
+  clampScrollFromBottom,
+  maxScrollFromBottom,
+  transcriptViewportRows,
+} from './transcriptScroll.js';
 
 let counter = 0;
 const nextId = () => `${Date.now()}-${counter++}`;
@@ -33,34 +32,44 @@ function truncateTitle(text: string, max = 50): string {
   return `${trimmed.slice(0, max - 3)}...`;
 }
 
-function storedMessagesToItems(
-  bannerCwd: string,
-  messages: DisplayRow[],
-): TranscriptItem[] {
-  return [
-    { kind: 'banner', id: 'banner', cwd: bannerCwd },
-    ...messages.map((m) => ({
-      kind: m.role,
-      id: nextId(),
-      text: m.content,
-    })),
-  ];
+function storedMessagesToItems(messages: DisplayRow[]): MessageItem[] {
+  return messages.map((m) => ({
+    kind: m.role,
+    id: nextId(),
+    text: m.content,
+  }));
 }
 
 export function App({ cwd }: { cwd: string }) {
   const { exit } = useApp();
+  const { stdout } = useStdout();
 
   const stateRef = useRef<AgentState>({ messages: [], model: DEFAULT_MODEL });
   const conversationIdRef = useRef<string | null>(null);
+  const pinnedToBottomRef = useRef(true);
 
-  const [items, setItems] = useState<TranscriptItem[]>([
-    { kind: 'banner', id: 'banner', cwd },
-  ]);
+  const [items, setItems] = useState<MessageItem[]>([]);
+  const [bannerCwd, setBannerCwd] = useState(cwd);
+  const [scrollFromBottom, setScrollFromBottom] = useState(0);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<AppView>('prompt');
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [userId, setUserId] = useState<string | null>(null);
-  const [sessionKey, setSessionKey] = useState('new');
+  const [terminalSize, setTerminalSize] = useState({
+    rows: stdout.rows,
+    columns: stdout.columns,
+  });
+
+  useEffect(() => {
+    const onResize = () => {
+      setTerminalSize({ rows: stdout.rows, columns: stdout.columns });
+    };
+
+    stdout.on('resize', onResize);
+    return () => {
+      stdout.off('resize', onResize);
+    };
+  }, [stdout]);
 
   useEffect(() => {
     const envSub = process.env[CODEGOAT_USER_SUB_ENV];
@@ -81,6 +90,80 @@ export function App({ cwd }: { cwd: string }) {
         // Chat works without persistence.
       });
   }, []);
+
+  const chatView = view === 'model-select' ? 'model-select' : 'prompt';
+  const viewportRows = transcriptViewportRows(
+    terminalSize.rows,
+    chatView,
+    busy,
+  );
+
+  useEffect(() => {
+    if (view !== 'prompt') return;
+
+    if (pinnedToBottomRef.current) {
+      setScrollFromBottom(0);
+      return;
+    }
+
+    setScrollFromBottom((current) =>
+      clampScrollFromBottom(
+        current,
+        items,
+        terminalSize.columns,
+        viewportRows,
+      ),
+    );
+  }, [items, terminalSize.columns, viewportRows, view]);
+
+  useInput(
+    (_input, key) => {
+      if (view !== 'prompt') return;
+
+      const pageStep = Math.max(1, Math.floor(viewportRows / 2));
+
+      if (key.pageUp) {
+        pinnedToBottomRef.current = false;
+        setScrollFromBottom((current) =>
+          clampScrollFromBottom(
+            current + pageStep,
+            items,
+            terminalSize.columns,
+            viewportRows,
+          ),
+        );
+        return;
+      }
+
+      if (key.pageDown) {
+        setScrollFromBottom((current) => {
+          const next = clampScrollFromBottom(
+            current - pageStep,
+            items,
+            terminalSize.columns,
+            viewportRows,
+          );
+          if (next === 0) pinnedToBottomRef.current = true;
+          return next;
+        });
+        return;
+      }
+
+      if (key.home) {
+        pinnedToBottomRef.current = false;
+        setScrollFromBottom(
+          maxScrollFromBottom(items, terminalSize.columns, viewportRows),
+        );
+        return;
+      }
+
+      if (key.end) {
+        pinnedToBottomRef.current = true;
+        setScrollFromBottom(0);
+      }
+    },
+    { isActive: view === 'prompt' && !busy },
+  );
 
   useInput((input, key) => {
     if (key.ctrl && input === 'd') exit();
@@ -109,7 +192,6 @@ export function App({ cwd }: { cwd: string }) {
             model: stateRef.current.model ?? DEFAULT_MODEL,
           });
           conversationIdRef.current = convId;
-          setSessionKey(convId);
         }
 
         await saveTurn({
@@ -132,8 +214,10 @@ export function App({ cwd }: { cwd: string }) {
     clearScreen();
     conversationIdRef.current = null;
     stateRef.current = { messages: [], model };
-    setItems([{ kind: 'banner', id: 'banner', cwd }]);
-    setSessionKey(`new-${Date.now()}`);
+    pinnedToBottomRef.current = true;
+    setScrollFromBottom(0);
+    setItems([]);
+    setBannerCwd(cwd);
     setView('prompt');
   }, [cwd, model]);
 
@@ -143,6 +227,7 @@ export function App({ cwd }: { cwd: string }) {
       appendInfo('Log in to switch conversations.');
       return;
     }
+    clearScreen();
     setView('conversation-select');
   }, [busy, userId, appendInfo]);
 
@@ -174,10 +259,10 @@ export function App({ cwd }: { cwd: string }) {
           model: loaded.model,
         };
         setModel(loaded.model);
-        setItems(
-          storedMessagesToItems(loaded.cwd ?? cwd, loaded.messages),
-        );
-        setSessionKey(loaded.id);
+        pinnedToBottomRef.current = true;
+        setScrollFromBottom(0);
+        setBannerCwd(loaded.cwd ?? cwd);
+        setItems(storedMessagesToItems(loaded.messages));
         setView('prompt');
       } catch (err) {
         appendInfo(
@@ -201,6 +286,7 @@ export function App({ cwd }: { cwd: string }) {
           return;
         }
         if (result.kind === 'view') {
+          clearScreen();
           setView(result.view);
           return;
         }
@@ -212,6 +298,8 @@ export function App({ cwd }: { cwd: string }) {
       }
 
       setItems((prev) => [...prev, { kind: 'user', id: nextId(), text }]);
+      pinnedToBottomRef.current = true;
+      setScrollFromBottom(0);
       stateRef.current.messages.push({ role: 'user', content: text });
       setBusy(true);
 
@@ -242,52 +330,54 @@ export function App({ cwd }: { cwd: string }) {
     [busy, exit, persistTurn],
   );
 
-  return (
-    <>
-      <Static key={sessionKey} items={items}>
-        {(item) =>
-          item.kind === 'banner' ? (
-            <Banner key={item.id} cwd={item.cwd} />
-          ) : (
-            <Message key={item.id} item={item} />
-          )
-        }
-      </Static>
+  const handleModelSelect = useCallback(
+    (value: string) => {
+      setModel(value);
+      stateRef.current.model = value;
+      setItems((prev) => [
+        ...prev,
+        {
+          kind: 'info',
+          id: nextId(),
+          text: `Model set to ${modelLabel(value)}`,
+        },
+      ]);
+      setView('prompt');
+    },
+    [],
+  );
 
-      <Box flexDirection="column">
-        {busy && <ThinkingLine />}
-        {view === 'model-select' ? (
-          <ModelSelect
-            current={model}
-            onSelect={(value) => {
-              setModel(value);
-              stateRef.current.model = value;
-              setItems((prev) => [
-                ...prev,
-                {
-                  kind: 'info',
-                  id: nextId(),
-                  text: `Model set to ${modelLabel(value)}`,
-                },
-              ]);
-              setView('prompt');
-            }}
-            onCancel={() => setView('prompt')}
-          />
-        ) : view === 'conversation-select' && userId ? (
-          <ConversationSelect
-            userId={userId}
-            onSelect={selectConversation}
-            onCancel={() => setView('prompt')}
-          />
-        ) : (
-          <Prompt
-            onSubmit={submit}
-            onOpenConversations={openConversationSelect}
-            disabled={busy}
-          />
-        )}
-      </Box>
-    </>
+  if (view === 'conversation-select' && userId) {
+    return (
+      <SessionsScreen
+        bannerCwd={bannerCwd}
+        userId={userId}
+        columns={terminalSize.columns}
+        rows={terminalSize.rows}
+        onSelect={selectConversation}
+        onCancel={() => {
+          clearScreen();
+          setView('prompt');
+        }}
+      />
+    );
+  }
+
+  return (
+    <ChatScreen
+      bannerCwd={bannerCwd}
+      items={items}
+      columns={terminalSize.columns}
+      rows={terminalSize.rows}
+      viewportRows={viewportRows}
+      scrollFromBottom={scrollFromBottom}
+      busy={busy}
+      view={chatView}
+      model={model}
+      onSubmit={submit}
+      onOpenConversations={openConversationSelect}
+      onModelSelect={handleModelSelect}
+      onModelCancel={() => setView('prompt')}
+    />
   );
 }

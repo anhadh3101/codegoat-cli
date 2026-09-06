@@ -1,7 +1,5 @@
 import { Box, Text } from 'ink';
-import type { TranscriptItem } from '../transcript.js';
-
-type MessageItem = Exclude<TranscriptItem, { kind: 'banner' }>;
+import type { MessageItem } from '../transcript.js';
 
 export function Message({ item }: { item: MessageItem }) {
   if (item.kind === 'user') {

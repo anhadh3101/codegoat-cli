@@ -4,3 +4,5 @@ export type TranscriptItem =
   | { kind: 'assistant'; id: string; text: string }
   | { kind: 'error'; id: string; text: string }
   | { kind: 'info'; id: string; text: string };
+
+export type MessageItem = Exclude<TranscriptItem, { kind: 'banner' }>;
